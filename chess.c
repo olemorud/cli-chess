@@ -1,4 +1,5 @@
 
+#include <ctype.h>
 #include <locale.h>
 #include <string.h>
 #include <wchar.h>
@@ -16,19 +17,28 @@
 #define WHITE 1
 #define BLACK -1
 
+int get_piece(char* str);
 void setcolor(int mode, int r, int g, int b);
 void print_board(int* board);
 void init_board(int* board);
+void do_turn(int turn_no, int* board);
 
 /*
  * main
  */
 int main(){
+	int turn = 0;
+
 	setlocale(LC_ALL, "C.UTF-8");
 
 	int *board;
 	init_board(board);
-	print_board(board);
+
+	while(1){
+		print_board(board);
+		do_turn(turn++, board);
+	}
+		
 
 	return 0;
 }
@@ -125,3 +135,70 @@ void init_board(int *board){
 	memcpy(board, start, sizeof(start));
 }
 
+
+// TODO: Implement algebaric notation	
+/*
+ * Get move, check move and log move for turn <turn_no>
+ */
+void do_turn(int turn_no, int* board){
+	char input[3] = { 0 };
+	int from = -1, to = -1, tmp;
+
+	printf("\nPlayer %i, your turn to move", 1 + turn_no%2);
+	
+	/* temporary and ugly solution - read from and to */
+	while(from == -1 || to == -1){
+		from = to = -1;
+
+		printf("\nMove piece\nfrom: ");
+		scanf(" %2s", input);
+		tmp = get_piece(input);
+		if(tmp == -1){
+			printf("bad value");
+			continue;
+		}
+		from = tmp;
+		
+		printf("\nto: ");
+		scanf(" %2s", input);
+		tmp = get_piece(input);
+		if(tmp == -1){
+			printf("bad value");
+			continue;
+		}
+		to = tmp;
+	}
+
+	board[to]   =  board[from];
+	board[from] = E;
+
+}
+
+
+/*
+ * Translates A1, 3B etc. to the 1D index of the board
+ */
+int get_piece(char *str){
+	int x = -1,
+		y = -1,
+		c;
+
+	for(int i=0; i<2; i++){
+		c = str[i];
+
+		if(isalpha(c)) c = toupper(str[0]);
+
+		if( 'A' <= c && c <= 'H' ){
+			x = c - 'A';
+		}else if( '1' <= c && c <= '8'){
+			y = c - '1';
+		}
+	}
+
+	if(x != -1 && y != -1){
+		printf("%i", 8*(8-y) + x);
+		return 8*(7-y) + x;
+	}else{
+		return -1;
+	}
+}
