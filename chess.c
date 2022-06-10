@@ -17,58 +17,92 @@
 #define BLACK -1
 
 
+void print_board(int* board);
+void init_board(int* board);
+
+/*
+ * main
+ */
+int main(){
+	setlocale(LC_ALL, "C.UTF-8");
+
+	int *board;
+	init_board(board);
+	print_board(board);
+
+	return 0;
+}
+
+
+/*
+ * Prints an escape char to set the font style
+ */
+void setcolor(int col){
+	printf("\033[%im", col);
+};
+
+
+/*
+ * Prints the board
+ */
 void print_board(int* board){
 	wchar_t piece;
 
-	// The unicode value for a white chess king is 0x2654
-	// the following unicode 5 unicode characters are the 
-	// other white chess pieces. (matches macro definitions)
-	// (https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode)
+	/*
+		The loop checks if the tile is empty and prints ' ' if so.
+		Otherwise the foreground color is set to match the player
+		and the unicode symbol for the piece is printed.
+
+		The unicode value for a fullcolor chess king is 0x2654
+		the following unicode 5 unicode characters are the 
+		other white chess pieces. (matches macro definitions)
+		(https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode) 
+	
+		The unicode symbol is calculated from adding 0x2653 and the
+		piece value.
+	*/
 
 	for(int i=0; i<8; i++){
-		printf(" %i ", 8-i); // number coordinates
+		printf("\n %i ", 8-i); // number coordinates
 
 		for(int j=0; j<8; j++){	
 			int p = board[i*8+j];
 			
-			// set tile color
+			// Make tiles black and white 
 			if((i+j) % 2)
-				printf("\033[100;39m"); // "light black"
+				setcolor(100); // white
 			else
-				printf("\033[107;39m"); // "light white"
+				setcolor(107); // black
 
+			// Print empty space and do nothing if tile is empty
 			if(p == E){
-				putchar(' ');
-			}else{
-				if(p > 0){
-					printf("\033[37m"); // white foreground
-				}else{
-					printf("\033[30m"); // black foreground
-					p *= -1;
-				}
-
-				piece = 0x2659 + p; // unicode for black king is 0x267a (0x2659 + 1).
-									// The macro definitions of pieces align with 
-									// unicode values to display the correct piece.
-				printf("%lc", piece);
+				printf("  ");
+				continue;
 			}
 
-			putchar(' ');
+			// Set piece color
+			if(p > 0){
+				setcolor(37); // white foreground
+			}else{
+				setcolor(30);
+				p *= -1;
+			}
+
+			printf("%lc ", 0x2659 + p);
 		}
 
-		printf("\033[0m"); // reset text attributes
-		putchar('\n');
+		setcolor(0); // reset text attributes
 	}
-
-	printf("\033[0m"); // reset text attributes
 	
-	// print letter coordinates
-	printf("  ");
-	for(int i=0; i<8; i++) printf(" %c", 'A'+i);
+	// Print horizontal letter coordinates
+	printf("\n  ");
+	for(int i=0; i<8; i++) printf(" %c", 'a'+i);
 }
 
 
-
+/*
+ * Resets/inits the board
+ */
 void init_board(int *board){
 	
 	// black pieces are prefixed by a minus (-)
@@ -86,13 +120,3 @@ void init_board(int *board){
 	memcpy(board, start, sizeof(start));
 }
 
-
-int main(){
-	setlocale(LC_ALL, "C.UTF-8");
-
-	int *board;
-	init_board(board);
-	print_board(board);
-
-	return 0;
-}
