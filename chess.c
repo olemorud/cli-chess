@@ -19,11 +19,11 @@
 #define BLACK -1
 
 int get_piece(char* str);
-void setcolor(int mode, int r, int g, int b);
+void setcolor(const int mode, const int r, const int g, const int b);
 void print_board(int* board);
 void init_board(int* board);
 void do_turn(int turn_no, int* board);
-
+int is_valid(int* board, const int from, const int to, const int player);
 
 /*
  * main
@@ -52,7 +52,7 @@ int main(){
  *  - 1: change foreground
  *  - 2: reset colors
  */
-void setcolor(int mode, int r, int g, int b){
+void setcolor(const int mode, const int r, const int g, const int b){
 	if( mode == 2 )
 		printf("\033[0m");
 	else
@@ -168,6 +168,12 @@ void do_turn(int turn_no, int* board){
 			continue;
 		}
 		to = tmp;
+
+		if(!is_valid(board, from, to, turn_no%2?BLACK:WHITE )){
+			printf("bad value");
+			from = -1;
+			continue;
+		}
 	}
 
 	board[to]   =  board[from];
@@ -201,4 +207,39 @@ int get_piece(char *str){
 	}else{
 		return -1;
 	}
+}
+
+
+
+int is_valid(int* board, const int from, const int to, const int player){
+	int movedelta = (from - to) * player;
+
+	printf("attempting to move %lc to %lc\t%i", 0x2659 + board[from], 0x2659 + board[to], movedelta);
+
+	switch(board[from]){
+	case P: case -P:
+		switch(movedelta){
+		default:
+			return 0;
+			break;
+
+		case 8:
+			if(board[to] == E)
+				return 1;
+			break;
+
+		case 7: case 9:
+			if(board[to] * board[from] < 0)
+				return 1;
+			break;
+
+		case 16:
+			if(board[to] == E && board[from - 8*player] == E && (from/8 == 1 || from/8 == 6 ))
+				return 1;
+			break;
+		}
+	default: return 0;
+	}
+
+	return 0;
 }
