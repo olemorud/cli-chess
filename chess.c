@@ -210,13 +210,16 @@ int get_piece(char *str){
 }
 
 
-
+/*
+ * Returns 1 if a move is valid, 0 otherwise
+ */
 int is_valid(int* board, const int from, const int to, const int player){
 	int movedelta = (from - to) * player;
 
 	printf("attempting to move %lc to %lc\t%i", 0x2659 + board[from], 0x2659 + board[to], movedelta);
 
 	switch(board[from]){
+	// PAWNS
 	case P: case -P:
 		switch(movedelta){
 		default:
@@ -238,6 +241,8 @@ int is_valid(int* board, const int from, const int to, const int player){
 				return 1;
 			break;
 		}
+
+	// the remaining pieces are left as an exercise for the reader 
 	default: return 0;
 	}
 
