@@ -14,8 +14,15 @@ make
 - [x] Parse user input
   - [x] rudimentary parsing
   - [ ] algebraic notation
-  - [ ] detect notation
+  - [ ] hybrid notation
 - [ ] Move validation
-- [ ] Check for winner
+  - [x] pawns
+  - [ ] bishops
+  - [ ] knights
+  - [ ] rooks
+  - [ ] queen
+  - [ ] king
+  - [ ] check if king becomes checked by move
+- [ ] Detect checkmate
 - [ ] Log game score sheet
 
