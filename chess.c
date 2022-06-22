@@ -40,7 +40,6 @@ int main(){
 		print_board(board);
 		do_turn(turn++, board);
 	}
-		
 
 	return 0;
 }
@@ -74,12 +73,12 @@ void print_board(int* board){
 		the following unicode 5 unicode characters are the 
 		other white chess pieces. (matches macro definitions)
 		(https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode) 
-	
-		The unicode symbol is calculated from adding 0x2653 and the
+
+		The unicode symbol is calculated from adding 0x2653 with the
 		piece value.
 	*/
 	for(int i=0; i<8; i++){
-		printf("\n %i ", 8-i); // number coordinates
+		printf("\n %i ", 8-i); // print number coordinates on y-axis
 
 		for(int j=0; j<8; j++){	
 			int p = board[i*8+j];
