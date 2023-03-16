@@ -222,6 +222,10 @@ int is_valid(int* board, const int from, const int to, const int player){
 	printf("attempting to move %lc to %lc\t%i", 0x2659 + board[from], 0x2659 + board[to], movedelta);
 
 	switch(board[from]){
+	default:
+		return 0;
+		break;
+
 	// PAWNS
 	case P: case -P:
 		switch(movedelta){
@@ -246,7 +250,6 @@ int is_valid(int* board, const int from, const int to, const int player){
 		}
 
 	// the remaining pieces are left as an exercise for the reader 
-	default: return 0;
 	}
 
 	return 0;
