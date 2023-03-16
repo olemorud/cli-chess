@@ -18,6 +18,8 @@
 #define WHITE 1
 #define BLACK -1
 
+#define BOARD_SIZE 8*8*sizeof(int)
+
 int get_piece(char* str);
 void setcolor(const int mode, const int r, const int g, const int b);
 void print_board(int* board);
@@ -33,7 +35,8 @@ int main(){
 
 	setlocale(LC_ALL, "C.UTF-8");
 
-	int *board;
+	int *board = malloc(BOARD_SIZE);
+
 	init_board(board);
 
 	while(1){
@@ -77,10 +80,10 @@ void print_board(int* board){
 		The unicode symbol is calculated from adding 0x2653 with the
 		piece value.
 	*/
-	for(int i=0; i<8; i++){
-		printf("\n %i ", 8-i); // print number coordinates on y-axis
+	for(size_t i=0; i<8; i++){
+		printf("\n %zu ", 8-i); // print number coordinates on y-axis
 
-		for(int j=0; j<8; j++){	
+		for(size_t j=0; j<8; j++){
 			int p = board[i*8+j];
 			
 			// Make tiles black and white 
