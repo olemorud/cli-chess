@@ -1,11 +1,10 @@
 
-# Terminal chess
-![Screenshot](./screenshot.png)
-
 ## Compile and run
 ```sh
+git clone https://github.com/olemorud/terminal-chess.git
+cd terminal-chess
 make
-./chess
+./bin/chess
 ```
 ## What is implemented
 - [x] Display board
@@ -17,12 +16,12 @@ make
   - [ ] hybrid notation
 - [ ] Move validation
   - [x] pawns
-  - [ ] bishops
-  - [ ] knights
-  - [ ] rooks
-  - [ ] queen
+  - [x] bishops
+  - [x] knights
+  - [x] rooks
+  - [x] queen
   - [ ] king
-  - [ ] check if king becomes checked by move
+    - [ ] check if king becomes checked by move
 - [ ] Detect checkmate
 - [ ] Log game score sheet
 
