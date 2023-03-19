@@ -1,13 +1,10 @@
 
-#include <ctype.h>
-#include <locale.h>
-#include <string.h>
-#include <wchar.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-
+#include <ctype.h>   /* isalpha, isdigit ... */
+#include <locale.h>  /* setlocale */
+#include <string.h>  /* memcpy */
+#include <stdio.h>   /* printf, scanf */
+#include <stdint.h>  /* int32_t */
+#include <stdbool.h> /* true, false */
 
 typedef int32_t tile_t;
 typedef ssize_t pos_t;
@@ -15,7 +12,7 @@ typedef ssize_t pos_t;
 #define ROW ( (pos_t) 8 )
 #define COL ( (pos_t) 1 )
 
-#define BOARD_SIZE 8*8*sizeof(tile_t)
+#define BOARD_SIZE ( 8*8*sizeof(tile_t) )
 
 #define E ( (tile_t) 0 ) /* empty */
 #define K ( (tile_t) 1 ) /* king */
@@ -72,13 +69,12 @@ int main(){
 	return 0;
 }
 
-
 /*
- * Sets the foreground or background color.
- * Modes:
- *  - 0: change background
- *  - 1: change foreground
- *  - 2: reset colors
+  Sets the foreground or background color for subsequent writes.
+  Modes:
+   0: change background
+   1: change foreground
+   2: reset colors
  */
 void setcolor(const int mode, const int r, const int g, const int b){
 	if( mode == 2 )
@@ -87,52 +83,38 @@ void setcolor(const int mode, const int r, const int g, const int b){
 		printf("\033[%i;2;%i;%i;%im", mode?38:48, r, g, b);
 };
 
-
-/*
- * Prints the board
- */
+/* Prints the board */
 void print_board(tile_t* board){
-	/*
-		The loop checks if the tile is empty and prints ' ' if so.
-		Otherwise the foreground color is set to match the player
-		and the unicode symbol for the piece is printed.
-
-		The unicode value for a fullcolor chess king is 0x2654
-		the following unicode 5 unicode characters are the 
-		other white chess pieces. (matches macro definitions)
-		(https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode) 
+	/* https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode
 
 		The unicode symbol is calculated from adding 0x2653 with the
-		piece value.
-	*/
-	for(size_t i=0; i<8; i++){
+		piece value. */
+
+	for (size_t i=0; i<8; i++) {
 		printf("\n %zu ", 8-i); // print number coordinates on y-axis
 
-		for(size_t j=0; j<8; j++){
+		for (size_t j=0; j<8; j++) {
 			tile_t p = board[i*8+j];
 			
-			// Make tile black and white
-			if((i+j) % 2)
-				setcolor(0, 100, 100, 150);
+			// Make tile dark and light
+			if ((i+j) % 2)
+				BG_DARKBLUE();
 			else
-				setcolor(0, 150, 150, 200);
-
+				BG_LIGHTBLUE();
 
 			// Print empty space and do nothing if tile is empty
-			if(p == E){
+			if (tile_empty(p)) {
 				printf("  ");
 				continue;
 			}
 
 			// Set piece color
-			if(p > 0){
-				setcolor(1, 0xff, 0xff, 0xff); //white
-			}else{
-				setcolor(1, 0, 0, 0); //black
-				p *= -1;
-			}
+			if (p > 0)
+				FG_WHITE();
+			else
+				FG_BLACK();
 			
-			printf("%lc ", UNICODE_CHESS_SYMBOL + p);
+			printf("%lc ", UNICODE_CHESS_SYMBOL + abs_tile(p));
 		}
 
 		setcolor(2, 0, 0, 0); // reset text attributes
@@ -140,14 +122,17 @@ void print_board(tile_t* board){
 	
 	// Print horizontal letter coordinates
 	printf("\n  ");
-	for(int i=0; i<8; i++) printf(" %c", 'a'+i);
+
+	for(int i=0; i<8; i++)
+		printf(" %c", 'a'+i);
 }
 
 
 /*
  * Resets/inits the board
  */
-void init_board(tile_t *board){
+void init_board(tile_t *board)
+{
 
 	// black pieces are prefixed by a minus (-)
 	const tile_t start[] = {
@@ -167,7 +152,8 @@ void init_board(tile_t *board){
 
 // TODO: Implement algebaric notation	
 /* Get move, check move and log move for turn <turn_no> */
-void do_turn(int turn_no, tile_t *board){
+void do_turn(int turn_no, tile_t *board)
+{
 	char input[3] = { 0 };
 
 	int from = -1,
@@ -177,7 +163,7 @@ void do_turn(int turn_no, tile_t *board){
 	printf("\nPlayer %i, your turn to move", 1 + turn_no%2);
 	
 	/* temporary and ugly solution - read from and to */
-	while(from == -1 || to == -1){
+	while (from == -1 || to == -1) {
 		from = -1;
 		to = -1;
 
@@ -186,7 +172,7 @@ void do_turn(int turn_no, tile_t *board){
 
 		tmp = get_piece(input);
 
-		if(tmp == -1)
+		if (tmp == -1)
 			continue;
 
 		from = tmp;
@@ -195,12 +181,12 @@ void do_turn(int turn_no, tile_t *board){
 		scanf(" %2s", input);
 		tmp = get_piece(input);
 
-		if(tmp == -1)
+		if (tmp == -1)
 			continue;
 
 		to = tmp;
 
-		if(!move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE )){
+		if (!move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE )) {
 			from = -1;
 			continue;
 		}
@@ -212,28 +198,28 @@ void do_turn(int turn_no, tile_t *board){
 
 
 /* Translates A1, 3B etc. to the 1D index of the board */
-int get_piece(char *input){
+int get_piece(char *input)
+{
 	int x = -1,
 		y = -1,
 		c;
 
-	for(int i=0; i<2; i++){
+	for (int i=0; i<2; i++) {
 		c = input[i];
 
-		if(isalpha(c)) c = toupper(input[0]);
+		if (isalpha(c))
+			c = toupper(input[0]);
 
-		if( 'A' <= c && c <= 'H' ){
+		if( 'A' <= c && c <= 'H' )
 			x = c - 'A';
-		}else if('1' <= c && c <= '8'){
+		else if('1' <= c && c <= '8')
 			y = c - '1';
-		}
 	}
 
-	if(x != -1 && y != -1){
+	if (x != -1 && y != -1)
 		return 8*(7-y) + x;
-	}else{
+	else
 		return -1;
-	}
 }
 
 pos_t abs_pos(pos_t p)
@@ -285,15 +271,13 @@ bool same_color(tile_t a, tile_t b)
 /* Returns true if a move is valid, false otherwise */
 bool move_ok(tile_t* board, pos_t from, pos_t to, int const player)
 {
-	printf("\nattempting to move %i to %i", board[from], board[to]);
-
 	/* player must own piece it moves */
 	if (board[from] * player < 0) {
 		printf("\nYou do not own this piece");
 		return false;
 	}
 
-	/* player can't take own pieces */
+	/* player can't take own pieces or move piece onto itself*/
 	if (same_color(board[from], board[to])) {
 		printf("\nYou can't take your own pieces");
 		return false;
@@ -301,9 +285,6 @@ bool move_ok(tile_t* board, pos_t from, pos_t to, int const player)
 
 	/* check piece specific moves */
 	switch (abs_tile(board[from])) {
-	default:
-		return 0;
-		break;
 
 	/* PAWNS */
 	case P:
