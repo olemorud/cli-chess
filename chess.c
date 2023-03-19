@@ -16,7 +16,7 @@
 #define WHITE 1
 #define BLACK -1
 
-
+void setcolor(int mode, int r, int g, int b);
 void print_board(int* board);
 void init_board(int* board);
 
@@ -35,10 +35,17 @@ int main(){
 
 
 /*
- * Prints an escape char to set the font style
+ * Sets the foreground or background color.
+ * Modes:
+ *  - 0: change background
+ *  - 1: change foreground
+ *  - 2: reset colors
  */
-void setcolor(int col){
-	printf("\033[%im", col);
+void setcolor(int mode, int r, int g, int b){
+	if( mode == 2 )
+		printf("\033[0m");
+	else
+		printf("\033[%i;2;%i;%i;%im", mode?38:48, r, g, b);
 };
 
 
@@ -70,9 +77,10 @@ void print_board(int* board){
 			
 			// Make tiles black and white 
 			if((i+j) % 2)
-				setcolor(100); // white
+				setcolor(0, 100, 100, 150);
 			else
-				setcolor(107); // black
+				setcolor(0, 150, 150, 200);
+
 
 			// Print empty space and do nothing if tile is empty
 			if(p == E){
@@ -82,16 +90,16 @@ void print_board(int* board){
 
 			// Set piece color
 			if(p > 0){
-				setcolor(37); // white foreground
+				setcolor(1, 0xff, 0xff, 0xff); //white
 			}else{
-				setcolor(30);
+				setcolor(1, 0, 0, 0); //black
 				p *= -1;
 			}
-
+			
 			printf("%lc ", 0x2659 + p);
 		}
 
-		setcolor(0); // reset text attributes
+		setcolor(2, 0, 0, 0); // reset text attributes
 	}
 	
 	// Print horizontal letter coordinates
