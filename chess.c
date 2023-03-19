@@ -5,27 +5,51 @@
 #include <wchar.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 
-#define E 0 /* empty */
-#define K 1 /* king */
-#define Q 2 /* queen  */
-#define R 3 /* rook */
-#define B 4 /* bishop */
-#define N 5 /* knight */
-#define P 6 /* pawn */
+typedef int32_t tile_t;
+typedef ssize_t pos_t;
+
+#define ROW ( (pos_t) 8 )
+#define COL ( (pos_t) 8 )
+
+#define BOARD_SIZE ROW * COL * sizeof(tile_t)
+
+#define E ( (tile_t) 0 ) /* empty */
+#define K ( (tile_t) 1 ) /* king */
+#define Q ( (tile_t) 2 ) /* queen  */
+#define R ( (tile_t) 3 ) /* rook */
+#define B ( (tile_t) 4 ) /* bishop */
+#define N ( (tile_t) 5 ) /* knight */
+#define P ( (tile_t) 6 ) /* pawn */
 
 #define WHITE 1
 #define BLACK -1
 
-#define BOARD_SIZE 8*8*sizeof(int)
+#define UNICODE_CHESS_SYMBOL 0x2659
 
-int get_piece(char* str);
-void setcolor(const int mode, const int r, const int g, const int b);
-void print_board(int* board);
-void init_board(int* board);
-void do_turn(int turn_no, int* board);
-int is_valid(int* board, const int from, const int to, const int player);
+
+int  get_piece(char* input);
+
+void setcolor(int mode, int r, int g, int b);
+
+void print_board(tile_t* board);
+
+void init_board(tile_t* board);
+
+void do_turn(int turn_no, tile_t *board);
+
+int  move_ok(tile_t* board, pos_t from, pos_t to, int player);
+
+bool tile_empty(tile_t t);
+
+int  column(pos_t t);
+
+int  row(pos_t t);
+
+bool pawn_move_ok(tile_t const *board, pos_t from, pos_t to, int direction);
 
 /*
  * main
@@ -35,7 +59,7 @@ int main(){
 
 	setlocale(LC_ALL, "C.UTF-8");
 
-	int *board = malloc(BOARD_SIZE);
+	tile_t *board = malloc(BOARD_SIZE);
 
 	init_board(board);
 
@@ -66,7 +90,7 @@ void setcolor(const int mode, const int r, const int g, const int b){
 /*
  * Prints the board
  */
-void print_board(int* board){
+void print_board(tile_t* board){
 	/*
 		The loop checks if the tile is empty and prints ' ' if so.
 		Otherwise the foreground color is set to match the player
@@ -84,9 +108,9 @@ void print_board(int* board){
 		printf("\n %zu ", 8-i); // print number coordinates on y-axis
 
 		for(size_t j=0; j<8; j++){
-			int p = board[i*8+j];
+			tile_t p = board[i*8+j];
 			
-			// Make tiles black and white 
+			// Make tile black and white
 			if((i+j) % 2)
 				setcolor(0, 100, 100, 150);
 			else
@@ -107,7 +131,7 @@ void print_board(int* board){
 				p *= -1;
 			}
 			
-			printf("%lc ", 0x2659 + p);
+			printf("%lc ", UNICODE_CHESS_SYMBOL + p);
 		}
 
 		setcolor(2, 0, 0, 0); // reset text attributes
@@ -122,10 +146,10 @@ void print_board(int* board){
 /*
  * Resets/inits the board
  */
-void init_board(int *board){
+void init_board(tile_t *board){
 
 	// black pieces are prefixed by a minus (-)
-	const int start[] = {
+	const tile_t start[] = {
 		-R,-N,-B,-Q,-K,-B,-N,-R, 
 		-P,-P,-P,-P,-P,-P,-P,-P, 
 		 E, E, E, E, E, E, E, E, 
@@ -144,7 +168,7 @@ void init_board(int *board){
 /*
  * Get move, check move and log move for turn <turn_no>
  */
-void do_turn(int turn_no, int* board){
+void do_turn(int turn_no, tile_t *board){
 	char input[3] = { 0 };
 	int from = -1, to = -1, tmp;
 
@@ -172,7 +196,7 @@ void do_turn(int turn_no, int* board){
 		}
 		to = tmp;
 
-		if(!is_valid(board, from, to, turn_no%2?BLACK:WHITE )){
+		if(!move_ok(board, from, to, turn_no%2?BLACK:WHITE )){
 			printf("bad value");
 			from = -1;
 			continue;
@@ -188,15 +212,15 @@ void do_turn(int turn_no, int* board){
 /*
  * Translates A1, 3B etc. to the 1D index of the board
  */
-int get_piece(char *str){
+int get_piece(char *input){
 	int x = -1,
 		y = -1,
 		c;
 
 	for(int i=0; i<2; i++){
-		c = str[i];
+		c = input[i];
 
-		if(isalpha(c)) c = toupper(str[0]);
+		if(isalpha(c)) c = toupper(input[0]);
 
 		if( 'A' <= c && c <= 'H' ){
 			x = c - 'A';
@@ -216,41 +240,85 @@ int get_piece(char *str){
 /*
  * Returns 1 if a move is valid, 0 otherwise
  */
-int is_valid(int* board, const int from, const int to, const int player){
-	int movedelta = (from - to) * player;
+int move_ok(tile_t* board, pos_t from, pos_t to, int const player)
+{
 
-	printf("attempting to move %lc to %lc\t%i", 0x2659 + board[from], 0x2659 + board[to], movedelta);
+	printf("attempting to move %i to %i", board[from], board[to]);
 
-	switch(board[from]){
+	switch (board[from]) {
 	default:
 		return 0;
 		break;
 
 	// PAWNS
 	case P: case -P:
-		switch(movedelta){
-		default:
-			return 0;
-			break;
-
-		case 8:
-			if(board[to] == E)
-				return 1;
-			break;
-
-		case 7: case 9:
-			if(board[to] * board[from] < 0)
-				return 1;
-			break;
-
-		case 16:
-			if(board[to] == E && board[from - 8*player] == E && (from/8 == 1 || from/8 == 6 ))
-				return 1;
-			break;
-		}
+		return pawn_move_ok(board, from, to, player);
 
 	// the remaining pieces are left as an exercise for the reader 
 	}
 
 	return 0;
+}
+
+/* Returns true if tile is empty */
+bool tile_empty(tile_t t)
+{
+	return t == E;
+}
+
+/* Returns row number of board index */
+int row(pos_t t)
+{
+	return t/ROW;
+}
+
+/* Returns column number of board index */
+int column(pos_t t)
+{
+	return t/COL;
+}
+
+/* Returns true if a and b are tiles of opposite player */
+bool are_opponents(tile_t a, tile_t b)
+{
+	return a*b < 0;
+}
+
+/* Returns true if move is a valid pawn move
+    board     - array of tiles representing chess board state
+    from      - index of board piece starts at
+    to        - index of board piece wants to move to
+    direction - pawns movement direction
+ *  */
+bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
+{
+	pos_t const diff = (from - to) * direction;
+
+	switch (diff) {
+	default:
+		return false;
+
+	case ROW: /* single move */
+		return tile_empty(board[to]);
+
+	case ROW - 1: case ROW+1: /* diagonal attack */
+		return are_opponents(board[to], board[from]);
+
+	case 2 * ROW: /* double move */
+		return tile_empty(board[to])
+		    && tile_empty(board[from - ROW * direction])
+		    && (row(from) == 1 || row(from) == 6 );
+	}
+}
+
+/* WIP */
+bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
+{
+	pos_t diff = (from - to);
+	
+	/* diagonal moves change row and col equally */
+	if (row(diff) != column(diff))
+		return false;
+
+	return false;
 }
