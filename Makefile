@@ -1,6 +1,6 @@
 
-CC = gcc
-CFLAGS = -O -ggdb3 -Wall -Wextra -Werror
+CC = clang
+CFLAGS = -Ofast -fsanitize=address -static-libsan -ggdb3 -Wall -Wextra -Werror
 
 .PHONY: all run gdb clean
 
