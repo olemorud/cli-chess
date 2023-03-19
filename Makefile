@@ -1,8 +1,24 @@
 
 CC = gcc
-CFLAGS = -O2 -g -Wall -Wextra -Werror
+CFLAGS = -O -ggdb3 -Wall -Wextra -Werror
 
-chess: chess.c
+.PHONY: all run gdb clean
+
+all: bin/chess
 
 clean:
-	rm chess
+	rm bin/*
+
+gdb: bin/chess
+	gdb $<
+
+run: bin/chess
+	./$<
+
+bin/chess: chess.c bin
+	$(CC) $(CFLAGS) $< -o $@
+
+
+bin:
+	mkdir -p bin
+
