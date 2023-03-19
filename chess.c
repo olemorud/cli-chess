@@ -13,9 +13,9 @@ typedef int32_t tile_t;
 typedef ssize_t pos_t;
 
 #define ROW ( (pos_t) 8 )
-#define COL ( (pos_t) 8 )
+#define COL ( (pos_t) 1 )
 
-#define BOARD_SIZE ROW * COL * sizeof(tile_t)
+#define BOARD_SIZE 8*8*sizeof(tile_t)
 
 #define E ( (tile_t) 0 ) /* empty */
 #define K ( (tile_t) 1 ) /* king */
@@ -41,15 +41,17 @@ void init_board(tile_t* board);
 
 void do_turn(int turn_no, tile_t *board);
 
-int  move_ok(tile_t* board, pos_t from, pos_t to, int player);
+bool move_ok(tile_t* board, pos_t from, pos_t to, int player);
 
 bool tile_empty(tile_t t);
 
-int  column(pos_t t);
+pos_t  column(pos_t t);
 
-int  row(pos_t t);
+pos_t  row(pos_t t);
 
 bool pawn_move_ok(tile_t const *board, pos_t from, pos_t to, int direction);
+
+bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to);
 
 /*
  * main
@@ -165,39 +167,41 @@ void init_board(tile_t *board){
 
 
 // TODO: Implement algebaric notation	
-/*
- * Get move, check move and log move for turn <turn_no>
- */
+/* Get move, check move and log move for turn <turn_no> */
 void do_turn(int turn_no, tile_t *board){
 	char input[3] = { 0 };
-	int from = -1, to = -1, tmp;
+
+	int from = -1,
+		to = -1,
+		tmp;
 
 	printf("\nPlayer %i, your turn to move", 1 + turn_no%2);
 	
 	/* temporary and ugly solution - read from and to */
 	while(from == -1 || to == -1){
-		from = to = -1;
+		from = -1;
+		to = -1;
 
 		printf("\nMove piece\nfrom: ");
 		scanf(" %2s", input);
+
 		tmp = get_piece(input);
-		if(tmp == -1){
-			printf("bad value");
+
+		if(tmp == -1)
 			continue;
-		}
+
 		from = tmp;
 		
 		printf("\nto: ");
 		scanf(" %2s", input);
 		tmp = get_piece(input);
-		if(tmp == -1){
-			printf("bad value");
+
+		if(tmp == -1)
 			continue;
-		}
+
 		to = tmp;
 
-		if(!move_ok(board, from, to, turn_no%2?BLACK:WHITE )){
-			printf("bad value");
+		if(!move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE )){
 			from = -1;
 			continue;
 		}
@@ -205,13 +209,10 @@ void do_turn(int turn_no, tile_t *board){
 
 	board[to]   =  board[from];
 	board[from] = E;
-
 }
 
 
-/*
- * Translates A1, 3B etc. to the 1D index of the board
- */
+/* Translates A1, 3B etc. to the 1D index of the board */
 int get_piece(char *input){
 	int x = -1,
 		y = -1,
@@ -236,28 +237,20 @@ int get_piece(char *input){
 	}
 }
 
-
-/*
- * Returns 1 if a move is valid, 0 otherwise
- */
-int move_ok(tile_t* board, pos_t from, pos_t to, int const player)
+pos_t abs_pos(pos_t p)
 {
+	if(p < 0)
+		return -1 * p;
 
-	printf("attempting to move %i to %i", board[from], board[to]);
+	return p;
+}
 
-	switch (board[from]) {
-	default:
-		return 0;
-		break;
+tile_t abs_tile(tile_t t)
+{
+	if(t < 0)
+		return -1 * t;
 
-	// PAWNS
-	case P: case -P:
-		return pawn_move_ok(board, from, to, player);
-
-	// the remaining pieces are left as an exercise for the reader 
-	}
-
-	return 0;
+	return t;
 }
 
 /* Returns true if tile is empty */
@@ -267,32 +260,74 @@ bool tile_empty(tile_t t)
 }
 
 /* Returns row number of board index */
-int row(pos_t t)
+pos_t row(pos_t t)
 {
-	return t/ROW;
+	return t / ROW;
 }
 
 /* Returns column number of board index */
-int column(pos_t t)
+pos_t column(pos_t t)
 {
-	return t/COL;
+	return t % ROW;
 }
 
 /* Returns true if a and b are tiles of opposite player */
-bool are_opponents(tile_t a, tile_t b)
+bool opposite_color(tile_t a, tile_t b)
 {
 	return a*b < 0;
+}
+
+/* Returns true if a and b are pieces of the same color */
+bool same_color(tile_t a, tile_t b)
+{
+	return a*b > 0;
+}
+
+/* Returns true if a move is valid, false otherwise */
+bool move_ok(tile_t* board, pos_t from, pos_t to, int const player)
+{
+	printf("\nattempting to move %i to %i", board[from], board[to]);
+
+	/* player must own piece it moves */
+	if (board[from] * player < 0) {
+		printf("\nYou do not own this piece");
+		return false;
+	}
+
+	/* player can't take own pieces */
+	if (same_color(board[from], board[to])) {
+		printf("\nYou can't take your own pieces");
+		return false;
+	}
+
+	/* check piece specific moves */
+	switch (abs_tile(board[from])) {
+	default:
+		return 0;
+		break;
+
+	/* PAWNS */
+	case P:
+		return pawn_move_ok(board, from, to, player);
+	
+	/* BISHOPS */
+	case B:
+		return bishop_move_ok(board, from, to);
+
+	// the remaining pieces are left as an exercise for the reader 
+	}
+
+	return 0;
 }
 
 /* Returns true if move is a valid pawn move
     board     - array of tiles representing chess board state
     from      - index of board piece starts at
     to        - index of board piece wants to move to
-    direction - pawns movement direction
- *  */
+    direction - pawns movement direction */
 bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
 {
-	pos_t const diff = (from - to) * direction;
+	pos_t const diff = (to - from) * -direction;
 
 	switch (diff) {
 	default:
@@ -302,7 +337,7 @@ bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
 		return tile_empty(board[to]);
 
 	case ROW - 1: case ROW+1: /* diagonal attack */
-		return are_opponents(board[to], board[from]);
+		return opposite_color(board[to], board[from]);
 
 	case 2 * ROW: /* double move */
 		return tile_empty(board[to])
@@ -311,14 +346,42 @@ bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
 	}
 }
 
-/* WIP */
+/* Returns true if move is a valid bishop move
+    board     - array of tiles representing chess board state
+    from      - index of board bishop is at
+    to        - index of board bishop wants to move to */
 bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
 {
-	pos_t diff = (from - to);
-	
-	/* diagonal moves change row and col equally */
-	if (row(diff) != column(diff))
-		return false;
+	pos_t const col_diff = column(to) - column(from);
+	pos_t const row_diff = row(to) - row(from);
 
-	return false;
+	pos_t const x_step = col_diff / abs_pos(col_diff);
+	pos_t const y_step = ROW * row_diff / abs_pos(row_diff);
+	pos_t const step = x_step + y_step;
+	
+	if (abs_pos(row_diff) != abs_pos(col_diff)) {
+		printf("bishops can only move diagonally");
+		return false;
+	}
+
+	if (same_color(board[from], board[to])) {
+		printf("can't take your own pieces");
+		return false;
+	}
+
+	bool flying = false;
+
+	for (pos_t p = from + step; p != to - step; p += step) {
+		if (!tile_empty(board[p])) {
+			flying = true;
+			break;
+		}
+	}
+
+	if (flying) {
+		printf("bishops can't jump over pieces");
+		return false;
+	}
+
+	return true;
 }
