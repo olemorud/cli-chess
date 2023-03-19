@@ -1,3 +1,6 @@
+# Terminal Chess
+
+![image](https://user-images.githubusercontent.com/82065181/226206893-6ee3e12d-89a6-47ef-9ce0-9ed6f41c2d6f.png)
 
 ## Compile and run
 ```sh
