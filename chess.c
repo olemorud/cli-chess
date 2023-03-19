@@ -53,8 +53,6 @@ void setcolor(int mode, int r, int g, int b){
  * Prints the board
  */
 void print_board(int* board){
-	wchar_t piece;
-
 	/*
 		The loop checks if the tile is empty and prints ' ' if so.
 		Otherwise the foreground color is set to match the player
@@ -68,7 +66,6 @@ void print_board(int* board){
 		The unicode symbol is calculated from adding 0x2653 and the
 		piece value.
 	*/
-
 	for(int i=0; i<8; i++){
 		printf("\n %i ", 8-i); // number coordinates
 
