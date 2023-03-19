@@ -25,47 +25,46 @@ typedef ssize_t pos_t;
 #define N ( (tile_t) 5 ) /* knight */
 #define P ( (tile_t) 6 ) /* pawn */
 
-#define WHITE 1
+#define BG_DARKBLUE()  setcolor(0, 100, 100, 150)
+#define BG_LIGHTBLUE() setcolor(0, 150, 150, 200)
+#define FG_BLACK()     setcolor(1, 0, 0, 0)
+#define FG_WHITE()     setcolor(1, 0xff, 0xff, 0xff)
+
+#define WHITE  1
 #define BLACK -1
 
 #define UNICODE_CHESS_SYMBOL 0x2659
 
-
-int  get_piece(char* input);
-
-void setcolor(int mode, int r, int g, int b);
-
-void print_board(tile_t* board);
-
-void init_board(tile_t* board);
-
-void do_turn(int turn_no, tile_t *board);
-
-bool move_ok(tile_t* board, pos_t from, pos_t to, int player);
-
-bool tile_empty(tile_t t);
-
+bool   bishop_move_ok(tile_t const* board, pos_t from, pos_t to);
+bool   cardinal_move_ok(tile_t const *board, pos_t from, pos_t to);
+bool   diagonal_move_ok(tile_t const *board, pos_t from, pos_t to);
+bool   king_move_ok(tile_t const *board, pos_t from, pos_t to);
+bool   knight_move_ok(pos_t from, pos_t to);
+bool   move_ok(tile_t* board, pos_t from, pos_t to, int player);
+bool   pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction);
+bool   queen_move_ok(tile_t const *board, pos_t from, pos_t to);
+bool   rook_move_ok(tile_t const *board, pos_t from, pos_t to);
+bool   tile_empty(tile_t t);
+int    get_piece(char* input);
+pos_t  abs_pos(pos_t p);
 pos_t  column(pos_t t);
-
 pos_t  row(pos_t t);
+tile_t abs_tile(tile_t t);
+void   do_turn(int turn_no, tile_t *board);
+void   init_board(tile_t* board);
+void   print_board(tile_t* board);
+void   setcolor(int mode, int r, int g, int b);
 
-bool pawn_move_ok(tile_t const *board, pos_t from, pos_t to, int direction);
-
-bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to);
-
-/*
- * main
- */
 int main(){
 	int turn = 0;
 
 	setlocale(LC_ALL, "C.UTF-8");
 
-	tile_t *board = malloc(BOARD_SIZE);
+	tile_t board[8*8] = { 0 };
 
 	init_board(board);
 
-	while(1){
+	while(1) {
 		print_board(board);
 		do_turn(turn++, board);
 	}
@@ -313,11 +312,23 @@ bool move_ok(tile_t* board, pos_t from, pos_t to, int const player)
 	/* BISHOPS */
 	case B:
 		return bishop_move_ok(board, from, to);
+	
+	/* ROOKS */
+	case R:
+		return rook_move_ok(board, from, to);
 
-	// the remaining pieces are left as an exercise for the reader 
+	/* KNIGHTS */
+	case N:
+		return knight_move_ok(from, to);
+	
+	case K:
+		return king_move_ok(board, from, to);
+	
+	case Q:
+		return queen_move_ok(board, from, to);
 	}
 
-	return 0;
+	return false;
 }
 
 /* Returns true if move is a valid pawn move
@@ -346,6 +357,10 @@ bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
 	}
 }
 
+/* Returns true if `to` is on a diagonal line of `from`
+    board - array of tiles representing chess board state
+    from  - index of board piece is at
+    to    - index of board piece tries to move to */
 bool diagonal_move_ok(tile_t const *board, pos_t from, pos_t to)
 {
 	pos_t const col_diff = column(to) - column(from);
@@ -354,32 +369,105 @@ bool diagonal_move_ok(tile_t const *board, pos_t from, pos_t to)
 	pos_t const x_step = col_diff / abs_pos(col_diff);
 	pos_t const y_step = ROW * row_diff / abs_pos(row_diff);
 	pos_t const step = x_step + y_step;
+	
+	if ( abs_pos(col_diff) != abs_pos(row_diff) ) {
+		printf("\nnot a diagonal move");
+		return false;
+	}
 
 	for (pos_t p = from + step; p != to; p += step) {
-		if (!tile_empty(board[p]))
+		if (!tile_empty(board[p])) {
+			printf("\ncan't jump over pieces");
 			return false;
+		}
+	}
+
+	return true;
+}
+
+/* Returns true if `to` is in a cardinal line of `from`
+    board - array of tiles representing chess board state
+    from  - index of board piece is at
+    to    - index of board piece tries to move to */
+bool cardinal_move_ok(tile_t const *board, pos_t from, pos_t to)
+{
+	pos_t const col_diff = column(to) - column(from);
+	pos_t const row_diff = row(to) - row(from);
+
+	if (row_diff > 0 && col_diff > 0) {
+		printf("Must move in a straight line");
+	}
+
+	pos_t step;
+
+	if (row_diff) {
+		step = ROW * row_diff / abs_pos(row_diff);
+	} else {
+		step = col_diff / abs_pos(col_diff);
+	}
+
+	for (pos_t p = from + step; p != to; p += step) {
+		if (!tile_empty(board[p])) {
+			printf("\ncan't jump over pieces");
+			return false;
+		}
 	}
 
 	return true;
 }
 
 /* Returns true if move is a valid bishop move
-    board     - array of tiles representing chess board state
-    from      - index of board bishop is at
-    to        - index of board bishop wants to move to */
+    board - array of tiles representing chess board state
+    from  - index of board bishop is at
+    to    - index of board bishop wants to move to */
 bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
 {
-	pos_t const diff = to - from;
-	
-	if ( diff % (ROW+COL) != 0 && diff % (ROW-COL) != 0 ) {
-		printf("bishops can only move diagonally");
-		return false;
-	}
+	return diagonal_move_ok(board, from, to);
+}
 
-	if (!diagonal_move_ok(board, from, to)) {
-		printf("cant jump over pieces");
-		return false;
-	}
+/* Returns true if move is a valid rook move
+    board - array of tiles representing chess board state
+    from  - index of board rook is at
+    to    - index of board rook wants to move to */
+bool rook_move_ok(tile_t const *board, pos_t from, pos_t to)
+{
+	return cardinal_move_ok(board, from, to);
+}
+
+/* Returns true if move is a valid knight move
+    board - array of tiles representing chess board state
+    from  - index of board knight is at
+    to    - index of board knight wants to move to */
+bool knight_move_ok(pos_t from, pos_t to)
+{
+	pos_t const abs_col_diff = abs_pos(column(to) - column(from));
+	pos_t const abs_row_diff = abs_pos(row(to) - row(from));
+
+	return (abs_col_diff == 1 && abs_row_diff == 2)
+		|| (abs_col_diff == 2 && abs_row_diff == 1);
+}
+
+/* Returns true if move is a valid king move
+    board - array of tiles representing chess board state
+    from  - index of board king is at
+    to    - index of board king wants to move to */
+bool king_move_ok(tile_t const *board, pos_t from, pos_t to)
+{
+	pos_t const abs_col_diff = abs_pos(column(to) - column(from));
+	pos_t const abs_row_diff = abs_pos(row(to) - row(from));
+
+	(void)board;
 	
-	return true;
+	return abs_col_diff <= 1
+		&& abs_row_diff <= 1;
+}
+
+/* Returns true if move is a valid queen move
+    board - array of tiles representing chess board state
+    from  - index of board queen is at
+    to    - index of board queen wants to move to */
+bool queen_move_ok(tile_t const *board, pos_t from, pos_t to)
+{
+	return diagonal_move_ok(board, from, to)
+		|| cardinal_move_ok(board, from, to);
 }
