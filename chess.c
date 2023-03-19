@@ -346,11 +346,7 @@ bool pawn_move_ok(tile_t const* board, pos_t from, pos_t to, int direction)
 	}
 }
 
-/* Returns true if move is a valid bishop move
-    board     - array of tiles representing chess board state
-    from      - index of board bishop is at
-    to        - index of board bishop wants to move to */
-bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
+bool diagonal_move_ok(tile_t const *board, pos_t from, pos_t to)
 {
 	pos_t const col_diff = column(to) - column(from);
 	pos_t const row_diff = row(to) - row(from);
@@ -358,30 +354,32 @@ bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
 	pos_t const x_step = col_diff / abs_pos(col_diff);
 	pos_t const y_step = ROW * row_diff / abs_pos(row_diff);
 	pos_t const step = x_step + y_step;
+
+	for (pos_t p = from + step; p != to; p += step) {
+		if (!tile_empty(board[p]))
+			return false;
+	}
+
+	return true;
+}
+
+/* Returns true if move is a valid bishop move
+    board     - array of tiles representing chess board state
+    from      - index of board bishop is at
+    to        - index of board bishop wants to move to */
+bool bishop_move_ok(tile_t const* board, pos_t from, pos_t to)
+{
+	pos_t const diff = to - from;
 	
-	if (abs_pos(row_diff) != abs_pos(col_diff)) {
+	if ( diff % (ROW+COL) != 0 && diff % (ROW-COL) != 0 ) {
 		printf("bishops can only move diagonally");
 		return false;
 	}
 
-	if (same_color(board[from], board[to])) {
-		printf("can't take your own pieces");
+	if (!diagonal_move_ok(board, from, to)) {
+		printf("cant jump over pieces");
 		return false;
 	}
-
-	bool flying = false;
-
-	for (pos_t p = from + step; p != to - step; p += step) {
-		if (!tile_empty(board[p])) {
-			flying = true;
-			break;
-		}
-	}
-
-	if (flying) {
-		printf("bishops can't jump over pieces");
-		return false;
-	}
-
+	
 	return true;
 }
