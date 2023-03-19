@@ -7,10 +7,10 @@
 #include <string.h>  /* memcpy */
 
 typedef int32_t tile_t;
-typedef ssize_t pos_t;
+typedef ssize_t index_t;
 
-#define ROW ((pos_t)8)
-#define COL ((pos_t)1)
+#define ROW ((index_t)8)
+#define COL ((index_t)1)
 
 #define BOARD_SIZE (8 * 8 * sizeof(tile_t))
 
@@ -32,25 +32,25 @@ typedef ssize_t pos_t;
 
 #define UNICODE_CHESS_SYMBOL 0x2659
 
-bool   bishop_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   cardinal_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   diagonal_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   king_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   knight_move_ok(pos_t from, pos_t to);
-bool   move_ok(tile_t *board, pos_t from, pos_t to, int player);
-bool   pawn_move_ok(const tile_t *board, pos_t from, pos_t to, int direction);
-bool   queen_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   rook_move_ok(const tile_t *board, pos_t from, pos_t to);
-bool   tile_empty(tile_t t);
-int    get_piece(char *input);
-pos_t  abs_pos(pos_t p);
-pos_t  column(pos_t t);
-pos_t  row(pos_t t);
-tile_t abs_tile(tile_t t);
-void   do_turn(int turn_no, tile_t *board);
-void   init_board(tile_t *board);
-void   print_board(tile_t *board);
-void   setcolor(int mode, int r, int g, int b);
+bool bishop_move_ok(const tile_t *board, index_t from, index_t to);
+bool cardinal_move_ok(const tile_t *board, index_t from, index_t to);
+bool diagonal_move_ok(const tile_t *board, index_t from, index_t to);
+bool king_move_ok(const tile_t *board, index_t from, index_t to);
+bool knight_move_ok(index_t from, index_t to);
+bool move_ok(tile_t *board, index_t from, index_t to, int player);
+bool pawn_move_ok(const tile_t *board, index_t from, index_t to, int direction);
+bool queen_move_ok(const tile_t *board, index_t from, index_t to);
+bool rook_move_ok(const tile_t *board, index_t from, index_t to);
+bool tile_empty(tile_t t);
+index_t abs_pos(index_t p);
+index_t column(index_t t);
+index_t row(index_t t);
+int     get_piece(char *input);
+tile_t  abs_tile(tile_t t);
+void    do_turn(int turn_no, tile_t *board);
+void    init_board(tile_t *board);
+void    print_board(tile_t *board);
+void    setcolor(int mode, int r, int g, int b);
 
 int main()
 {
@@ -212,7 +212,7 @@ int get_piece(char *input)
         return -1;
 }
 
-pos_t abs_pos(pos_t p)
+index_t abs_pos(index_t p)
 {
     if (p < 0)
         return -1 * p;
@@ -235,13 +235,13 @@ bool tile_empty(tile_t t)
 }
 
 /* Returns row number of board index */
-pos_t row(pos_t t)
+index_t row(index_t t)
 {
     return t / ROW;
 }
 
 /* Returns column number of board index */
-pos_t column(pos_t t)
+index_t column(index_t t)
 {
     return t % ROW;
 }
@@ -259,11 +259,16 @@ bool same_color(tile_t a, tile_t b)
 }
 
 /* Returns true if a move is valid, false otherwise */
-bool move_ok(tile_t *board, pos_t from, pos_t to, const int player)
+bool move_ok(tile_t *board, index_t from, index_t to, const int player)
 {
     /* player must own piece it moves */
     if (board[from] * player < 0) {
         printf("\nYou do not own this piece");
+        return false;
+    }
+
+    if (tile_empty(board[from])) {
+        printf("Can't move from empty tile");
         return false;
     }
 
@@ -275,19 +280,15 @@ bool move_ok(tile_t *board, pos_t from, pos_t to, const int player)
 
     /* check piece specific moves */
     switch (abs_tile(board[from])) {
-    /* PAWNS */
     case P:
         return pawn_move_ok(board, from, to, player);
 
-    /* BISHOPS */
     case B:
         return bishop_move_ok(board, from, to);
 
-    /* ROOKS */
     case R:
         return rook_move_ok(board, from, to);
 
-    /* KNIGHTS */
     case N:
         return knight_move_ok(from, to);
 
@@ -306,9 +307,9 @@ bool move_ok(tile_t *board, pos_t from, pos_t to, const int player)
     from      - index of board piece starts at
     to        - index of board piece wants to move to
     direction - pawns movement direction */
-bool pawn_move_ok(const tile_t *board, pos_t from, pos_t to, int direction)
+bool pawn_move_ok(const tile_t *board, index_t from, index_t to, int direction)
 {
-    const pos_t diff = (to - from) * -direction;
+    const index_t diff = (to - from) * -direction;
 
     switch (diff) {
     default:
@@ -332,23 +333,23 @@ bool pawn_move_ok(const tile_t *board, pos_t from, pos_t to, int direction)
     board - array of tiles representing chess board state
     from  - index of board piece is at
     to    - index of board piece tries to move to */
-bool diagonal_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool diagonal_move_ok(const tile_t *board, index_t from, index_t to)
 {
-    const pos_t col_diff = column(to) - column(from);
-    const pos_t row_diff = row(to) - row(from);
+    const index_t col_diff = column(to) - column(from);
+    const index_t row_diff = row(to) - row(from);
 
-    const pos_t x_step = col_diff / abs_pos(col_diff);
-    const pos_t y_step = ROW * row_diff / abs_pos(row_diff);
-    const pos_t step   = x_step + y_step;
+    const index_t x_step = col_diff / abs_pos(col_diff);
+    const index_t y_step = ROW * row_diff / abs_pos(row_diff);
+    const index_t step   = x_step + y_step;
 
     if (abs_pos(col_diff) != abs_pos(row_diff)) {
-        printf("\nnot a diagonal move");
+        printf("\nNot a diagonal move");
         return false;
     }
 
-    for (pos_t p = from + step; p != to; p += step) {
+    for (index_t p = from + step; p != to; p += step) {
         if (! tile_empty(board[p])) {
-            printf("\ncan't jump over pieces");
+            printf("\nCan't jump over pieces");
             return false;
         }
     }
@@ -360,22 +361,22 @@ bool diagonal_move_ok(const tile_t *board, pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board piece is at
     to    - index of board piece tries to move to */
-bool cardinal_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool cardinal_move_ok(const tile_t *board, index_t from, index_t to)
 {
-    const pos_t col_diff = column(to) - column(from);
-    const pos_t row_diff = row(to) - row(from);
+    const index_t col_diff = column(to) - column(from);
+    const index_t row_diff = row(to) - row(from);
 
     if (row_diff > 0 && col_diff > 0)
         printf("Must move in a straight line");
 
-    pos_t step;
+    index_t step;
 
     if (row_diff)
         step = ROW * row_diff / abs_pos(row_diff);
     else
         step = col_diff / abs_pos(col_diff);
 
-    for (pos_t p = from + step; p != to; p += step) {
+    for (index_t p = from + step; p != to; p += step) {
         if (! tile_empty(board[p])) {
             printf("\ncan't jump over pieces");
             return false;
@@ -389,7 +390,7 @@ bool cardinal_move_ok(const tile_t *board, pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board bishop is at
     to    - index of board bishop wants to move to */
-bool bishop_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool bishop_move_ok(const tile_t *board, index_t from, index_t to)
 {
     return diagonal_move_ok(board, from, to);
 }
@@ -398,7 +399,7 @@ bool bishop_move_ok(const tile_t *board, pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board rook is at
     to    - index of board rook wants to move to */
-bool rook_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool rook_move_ok(const tile_t *board, index_t from, index_t to)
 {
     return cardinal_move_ok(board, from, to);
 }
@@ -407,10 +408,10 @@ bool rook_move_ok(const tile_t *board, pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board knight is at
     to    - index of board knight wants to move to */
-bool knight_move_ok(pos_t from, pos_t to)
+bool knight_move_ok(index_t from, index_t to)
 {
-    const pos_t abs_col_diff = abs_pos(column(to) - column(from));
-    const pos_t abs_row_diff = abs_pos(row(to) - row(from));
+    const index_t abs_col_diff = abs_pos(column(to) - column(from));
+    const index_t abs_row_diff = abs_pos(row(to) - row(from));
 
     return (abs_col_diff == 1 && abs_row_diff == 2)
         || (abs_col_diff == 2 && abs_row_diff == 1);
@@ -420,10 +421,10 @@ bool knight_move_ok(pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board king is at
     to    - index of board king wants to move to */
-bool king_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool king_move_ok(const tile_t *board, index_t from, index_t to)
 {
-    const pos_t abs_col_diff = abs_pos(column(to) - column(from));
-    const pos_t abs_row_diff = abs_pos(row(to) - row(from));
+    const index_t abs_col_diff = abs_pos(column(to) - column(from));
+    const index_t abs_row_diff = abs_pos(row(to) - row(from));
 
     (void)board;
 
@@ -434,7 +435,7 @@ bool king_move_ok(const tile_t *board, pos_t from, pos_t to)
     board - array of tiles representing chess board state
     from  - index of board queen is at
     to    - index of board queen wants to move to */
-bool queen_move_ok(const tile_t *board, pos_t from, pos_t to)
+bool queen_move_ok(const tile_t *board, index_t from, index_t to)
 {
     return diagonal_move_ok(board, from, to)
         || cardinal_move_ok(board, from, to);
