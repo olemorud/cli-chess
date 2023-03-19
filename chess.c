@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define E 0 /* empty  */
+
+#define E 0 /* empty */
 #define K 1 /* king */
 #define Q 2 /* queen  */
 #define R 3 /* rook */
@@ -22,6 +23,7 @@ void setcolor(int mode, int r, int g, int b);
 void print_board(int* board);
 void init_board(int* board);
 void do_turn(int turn_no, int* board);
+
 
 /*
  * main
@@ -119,7 +121,7 @@ void print_board(int* board){
  * Resets/inits the board
  */
 void init_board(int *board){
-	
+
 	// black pieces are prefixed by a minus (-)
 	const int start[] = {
 		-R,-N,-B,-Q,-K,-B,-N,-R, 
@@ -190,13 +192,12 @@ int get_piece(char *str){
 
 		if( 'A' <= c && c <= 'H' ){
 			x = c - 'A';
-		}else if( '1' <= c && c <= '8'){
+		}else if('1' <= c && c <= '8'){
 			y = c - '1';
 		}
 	}
 
 	if(x != -1 && y != -1){
-		printf("%i", 8*(8-y) + x);
 		return 8*(7-y) + x;
 	}else{
 		return -1;
