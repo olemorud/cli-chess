@@ -7,7 +7,6 @@
 bool move_ok(const tile_t board[BOARD_SIZE],
              index_t      from,
              index_t      to,
-             const int    player);
-
+             int    player);
 
 #endif

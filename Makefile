@@ -1,16 +1,29 @@
 
 CC = clang
-CFLAGS = -Ofast -fsanitize=address -static-libsan -ggdb3 -Wall -Wextra -Werror
+LD = ld.lld
+CFLAGS =  -Iinclude
+CFLAGS += -Ofast -ggdb3
+CFLAGS += -Wall -Wextra -Werror
+CFLAGS += -fsanitize=address
+LDFLAGS = -fuse-ld=lld
+LDFLAGS = -fsanitize=address
 
-.PHONY: all run gdb clean docs
+_OBJ = chess.o common.o graphics.o pieces.o util.o
+OBJ = $(addprefix obj/, $(_OBJ))
 
 all: bin/chess
+
+obj:
+	mkdir -p $@
+
+bin:
+	mkdir -p $@
 
 docs:
 	doxygen doxygen-config
 
 clean:
-	rm bin/*
+	rm bin/* obj/*.o
 
 gdb: bin/chess
 	gdb $<
@@ -18,10 +31,10 @@ gdb: bin/chess
 run: bin/chess
 	./$<
 
-bin/chess: chess.c bin
-	$(CC) $(CFLAGS) $< -o $@
+obj/%.o: src/%.c
+	$(CC) -o $@ $(CFLAGS) -c $<
 
+bin/chess: $(OBJ)
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
-bin:
-	mkdir -p bin
-
+.PHONY: all run gdb clean docs

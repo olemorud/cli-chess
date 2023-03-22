@@ -1,14 +1,14 @@
 
-#include <ctype.h>   /* isalpha, isdigit ... */
-#include <locale.h>  /* setlocale */
-#include <stdio.h>   /* printf, scanf */
-#include <string.h>  /* memcpy */
-
 #include "common.h"
 #include "graphics.h"
 #include "pieces.h"
 
-void    do_turn(int turn_no, tile_t board[BOARD_SIZE]);
+#include <ctype.h>  /* isalpha, isdigit ... */
+#include <locale.h> /* setlocale */
+#include <stdio.h>  /* printf, scanf */
+#include <string.h> /* memcpy */
+
+int    do_turn(int turn_no, tile_t board[BOARD_SIZE]);
 void    init_board(tile_t board[BOARD_SIZE]);
 index_t input_to_index(char input[2]);
 
@@ -25,8 +25,10 @@ int main()
     while (true) {
         printf("\033[2J"); // clear screen
         print_board(board);
-        do_turn(turn, board);
-        ++turn;
+
+		// turn increments on valid inputs,
+		// otherwise refreshes screen
+        turn = do_turn(turn, board);
     }
 
     return 0;
@@ -54,49 +56,43 @@ void init_board(tile_t board[BOARD_SIZE])
 // TODO: Implement algebaric notation
 /** Asks for move, validates move and does move if valid
  *
- * \param turn_no Turn number, is increased between every `do_turn` elsewhere
+ * \param turn_no Turn number
  * \param board   Pointer to list of tiles representing board state
+ *
+ * \return turn+1 if successful, turn+0 if invalid input from player
  * */
-void do_turn(int turn_no, tile_t board[BOARD_SIZE])
+int do_turn(int turn_no, tile_t board[BOARD_SIZE])
 {
     char input[3] = { 0 };
 
-    int from = -1, to = -1, tmp;
+    int from = -1, to = -1;
 
     printf("\nPlayer %i, your turn to move", 1 + turn_no % 2);
+	printf("\nMove piece\nfrom: ");
 
-    /* temporary and ugly solution - read from and to */
-    while (from == -1 || to == -1) {
-        from = -1;
-        to   = -1;
+	scanf(" %2s", input);
 
-        printf("\nMove piece\nfrom: ");
-        scanf(" %2s", input);
+	from = input_to_index(input);
 
-        tmp = input_to_index(input);
+	if (from == -1)
+		return turn_no;
 
-        if (tmp == -1)
-            continue;
+	printf("\nto: ");
+	scanf(" %2s", input);
 
-        from = tmp;
+	to = input_to_index(input);
 
-        printf("\nto: ");
-        scanf(" %2s", input);
-        tmp = input_to_index(input);
+	if (to == -1)
+		return turn_no;
 
-        if (tmp == -1)
-            continue;
-
-        to = tmp;
-
-        if (! move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE)) {
-            from = -1;
-            continue;
-        }
-    }
+	if (! move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE))
+		return turn_no;
 
     board[to]   = board[from];
     board[from] = E;
+
+	/* increment to make it next turn */
+	return turn_no+1;
 }
 
 /**
@@ -126,4 +122,3 @@ index_t input_to_index(char input[2])
     else
         return -1;
 }
-

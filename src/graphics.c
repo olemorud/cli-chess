@@ -1,26 +1,28 @@
 
 #include "graphics.h"
+
 #include "common.h"
 #include "util.h"
 
 #include <stdio.h>
 
 /** Set background to dark blue */
-#define BG_DARKBLUE()  setcolor(0, 100, 100, 150)
+#define BG_DARKBLUE() setcolor(0, 100, 100, 150)
 
 /** Set background to light blue */
 #define BG_LIGHTBLUE() setcolor(0, 150, 150, 200)
 
 /** Set foreground to black */
-#define FG_BLACK()     setcolor(1, 0, 0, 0)
+#define FG_BLACK() setcolor(1, 0, 0, 0)
 
 /** Set foreground to white */
-#define FG_WHITE()     setcolor(1, 0xff, 0xff, 0xff)
+#define FG_WHITE() setcolor(1, 0xff, 0xff, 0xff)
 
 /** 0x2659 == ♙ */
 #define UNICODE_CHESS_SYMBOL 0x2659
 
-static inline void setcolor(const int mode, const int r, const int g, const int b);
+static inline void
+setcolor(const int mode, const int r, const int g, const int b);
 
 /**
  * Sets the foreground or background color for subsequent writes.
@@ -33,7 +35,8 @@ static inline void setcolor(const int mode, const int r, const int g, const int 
  * \param b    amount of blue (0 to 255)
  * \param g    amount of green (0 to 255)
  */
-static inline void setcolor(const int mode, const int r, const int g, const int b)
+static inline void
+setcolor(const int mode, const int r, const int g, const int b)
 {
     if (mode == 2)
         printf("\033[0m");

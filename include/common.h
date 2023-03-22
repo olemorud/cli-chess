@@ -1,7 +1,7 @@
 
-#include <stdint.h>  /* int32_t */
-#include <stddef.h>  /* ptrdiff_t */
 #include <stdbool.h> /* true, false, bool */
+#include <stddef.h>  /* ptrdiff_t */
+#include <stdint.h>  /* int32_t */
 
 /** Type representing piece/tile on a chessboard */
 typedef int32_t tile_t;

@@ -78,5 +78,3 @@ bool same_color(tile_t a, tile_t b)
 {
     return a * b > 0;
 }
-
-

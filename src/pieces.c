@@ -2,19 +2,23 @@
 #include "common.h"
 #include "util.h"
 
-
-static bool bishop_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-static bool cardinal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-static bool diagonal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-static bool king_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-static bool knight_move_ok(index_t from, index_t to);
-static bool pawn_move_ok(const tile_t board[BOARD_SIZE],
-                   index_t      from,
-                   index_t      to,
-                   int          player);
-static bool queen_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-static bool rook_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
-
+ bool
+bishop_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
+ bool
+cardinal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
+ bool
+diagonal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
+ bool
+king_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
+ bool knight_move_ok(index_t from, index_t to);
+ bool pawn_move_ok(const tile_t board[BOARD_SIZE],
+                         index_t      from,
+                         index_t      to,
+                         int          player);
+ bool
+queen_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
+ bool
+rook_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to);
 
 /**
  * Returns true if move is a valid pawn move
@@ -67,10 +71,9 @@ bool diagonal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to)
     if (abs_pos(col_diff) != abs_pos(row_diff))
         return false;
 
-    for (index_t p = from + step; p != to; p += step) {
+    for (index_t p = from + step; p != to; p += step)
         if (! tile_empty(board[p]))
             return false;
-    }
 
     return true;
 }
@@ -87,18 +90,16 @@ bool cardinal_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to)
     const index_t col_diff = column(to) - column(from);
     const index_t row_diff = row(to) - row(from);
 
-	/* cardinal moves means one direction has to be zero */
+    /* cardinal moves means one direction has to be zero */
     if (row_diff > 0 && col_diff > 0)
-		return false;
+        return false;
 
-    index_t step = row_diff ?
-		  ROW * row_diff / abs_pos(row_diff)
-        : col_diff / abs_pos(col_diff);
+    index_t step = row_diff ? ROW * row_diff / abs_pos(row_diff) :
+                              col_diff / abs_pos(col_diff);
 
-    for (index_t p = from + step; p != to; p += step) {
+    for (index_t p = from + step; p != to; p += step)
         if (! tile_empty(board[p]))
             return false;
-    }
 
     return true;
 }
@@ -138,8 +139,7 @@ bool knight_move_ok(index_t from, index_t to)
     const index_t c = abs_pos(column(to) - column(from));
     const index_t r = abs_pos(row(to - from));
 
-    return (c == 1 && r == 2)
-        || (c == 2 && r == 1);
+    return (c == 1 && r == 2) || (c == 2 && r == 1);
 }
 
 /**
@@ -183,7 +183,7 @@ bool queen_move_ok(const tile_t board[BOARD_SIZE], index_t from, index_t to)
 bool move_ok(const tile_t board[BOARD_SIZE],
              index_t      from,
              index_t      to,
-             int    player)
+             int          player)
 {
     /* player must own piece it moves */
     if (board[from] * player < 0)
