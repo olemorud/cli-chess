@@ -5,30 +5,32 @@
 
 #include <ctype.h>  /* isalpha, isdigit ... */
 #include <locale.h> /* setlocale */
+#include <stdint.h> /* uint64_t */
 #include <stdio.h>  /* printf, scanf */
 #include <string.h> /* memcpy */
 
-int    do_turn(int turn_no, tile_t board[BOARD_SIZE]);
+#define CLEAR_SCREEN() printf("\033[2J")
+
+int     do_turn(int turn_no, tile_t board[BOARD_SIZE]);
 void    init_board(tile_t board[BOARD_SIZE]);
 index_t input_to_index(char input[2]);
 
 int main()
 {
-    int turn = 0;
-
     setlocale(LC_ALL, "C.UTF-8");
 
-    tile_t board[8 * 8] = { 0 };
+    tile_t board[BOARD_SIZE] = { 0 };
 
     init_board(board);
 
+    int turn = 0;
+
     while (true) {
-        printf("\033[2J"); // clear screen
+        CLEAR_SCREEN();
         print_board(board);
 
-		// turn increments on valid inputs,
-		// otherwise refreshes screen
-        turn = do_turn(turn, board);
+        // turn increments on valid inputs,
+        turn += do_turn(turn, board);
     }
 
     return 0;
@@ -59,7 +61,7 @@ void init_board(tile_t board[BOARD_SIZE])
  * \param turn_no Turn number
  * \param board   Pointer to list of tiles representing board state
  *
- * \return turn+1 if successful, turn+0 if invalid input from player
+ * \return (int)1 if successful, (int)0 if invalid input from player
  * */
 int do_turn(int turn_no, tile_t board[BOARD_SIZE])
 {
@@ -68,31 +70,31 @@ int do_turn(int turn_no, tile_t board[BOARD_SIZE])
     int from = -1, to = -1;
 
     printf("\nPlayer %i, your turn to move", 1 + turn_no % 2);
-	printf("\nMove piece\nfrom: ");
+    printf("\nMove piece\nfrom: ");
 
-	scanf(" %2s", input);
+    scanf(" %2s", input);
 
-	from = input_to_index(input);
+    from = input_to_index(input);
 
-	if (from == -1)
-		return turn_no;
+    if (from == -1)
+        return 0;
 
-	printf("\nto: ");
-	scanf(" %2s", input);
+    printf("\nto: ");
+    scanf(" %2s", input);
 
-	to = input_to_index(input);
+    to = input_to_index(input);
 
-	if (to == -1)
-		return turn_no;
+    if (to == -1)
+        return 0;
 
-	if (! move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE))
-		return turn_no;
+    if (! move_ok(board, from, to, turn_no % 2 ? BLACK : WHITE))
+        return 0;
 
     board[to]   = board[from];
     board[from] = E;
 
-	/* increment to make it next turn */
-	return turn_no+1;
+    /* increment to make it next turn */
+    return 1;
 }
 
 /**
@@ -100,21 +102,22 @@ int do_turn(int turn_no, tile_t board[BOARD_SIZE])
  *
  *	\param input string of length 2 representing tile, e.g. "A3"
  *
+ *	\return index value on valid input, -1 on invalid input
+ *
  * */
 index_t input_to_index(char input[2])
 {
-    int x = -1, y = -1, c;
+    int x = -1, y = -1;
 
     for (int i = 0; i < 2; i++) {
-        c = input[i];
+        const char c = input[i];
 
-        if (isalpha(c))
-            c = toupper(input[0]);
+        const char v = isalpha(c) ? toupper(c) : c;
 
-        if ('A' <= c && c <= 'H')
-            x = c - 'A';
-        else if ('1' <= c && c <= '8')
-            y = c - '1';
+        if ('A' <= v && v <= 'H')
+            x = v - 'A';
+        else if ('1' <= v && v <= '8')
+            y = v - '1';
     }
 
     if (x != -1 && y != -1)
