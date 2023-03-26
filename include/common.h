@@ -11,8 +11,8 @@ typedef ptrdiff_t index_t;
 
 #define BOARD_SIZE ((index_t)(8 * 8))
 
-#define WHITE 1
-#define BLACK -1
+#define WHITE ((tile_t)1)
+#define BLACK ((tile_t)-1)
 
 #define E ((tile_t)0) ///< empty tile
 #define K ((tile_t)1) ///< king

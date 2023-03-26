@@ -1,6 +1,42 @@
 
 #include "util.h"
 
+#include "common.h"
+
+/**
+ * Get sign of a number
+ *
+ * \param n positive or negative integer
+ *
+ * \return 1 if number is positive
+ *        -1 if number is negative
+ *        0  if number is zero
+ */
+int64_t get_sign(int64_t n)
+{
+    if (n == 0)
+        return 0;
+
+    if (n >= 0)
+        return 1;
+
+    return -1;
+}
+
+/**
+ * Get the color of a tile
+ *
+ * \param t tile to check
+ *
+ * \return WHITE (1)  if tile is white,
+ *         BLACK (-1) if tile is black,
+ *         0 if the tile is empty
+ */
+tile_t get_color(tile_t t)
+{
+    return (tile_t)get_sign(t);
+}
+
 /**
  * Calculate the absolute value of an index_t value
  *
