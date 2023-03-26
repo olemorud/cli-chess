@@ -51,9 +51,8 @@ BraceWrapping:
   IndentBraces:     false
   SplitEmptyFunction: true
   SplitEmptyRecord: true
-BreakBeforeBinaryOperators: true
-BreakBeforeInheritanceComma: false
-BreakBeforeTernaryOperators: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
 BreakStringLiterals: true
 ColumnLimit:     80
 CommentPragmas:  '^ IWYU pragma:'
