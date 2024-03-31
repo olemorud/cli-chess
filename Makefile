@@ -1,11 +1,10 @@
 
-CC = clang
-LD = ld.lld
+CC = gcc
 #CFLAGS += -O0 -ggdb3
 CFLAGS += -Ofast -ggdb3
-CFLAGS += -Wall -Wextra -Wno-unused-function
+CFLAGS += -Wall -Wextra -Wno-unused-function -rdynamic
 #CFLAGS += -fsanitize=address
-LDFLAGS = -fuse-ld=lld
+LDFLAGS = -fuse-ld=lld -rdynamic
 #LDFLAGS += -fsanitize=address
 
 _OBJ = chess.o
@@ -36,7 +35,6 @@ bin/chess: $(OBJ)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
 $(TEST_DIR)/bin/test_%: testing/test_%.c obj/%.o obj/util.o
-	echo $^
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
 .PHONY: all clean docs test
