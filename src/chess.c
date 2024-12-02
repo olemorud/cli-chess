@@ -11,9 +11,11 @@
 #include <stdint.h>  /* int32_t */
 #include <stdio.h>   /* printf, scanf */
 #include <stdlib.h>
+#include <string.h>
 
-#define MAX_DEPTH 4
+#define MAX_DEPTH 5
 #define CHECKMATE_SCORE 100000
+#define SET_SIZE 4096
 
 #define RANK       ((index_t)8)
 #define COL        ((index_t)1)
@@ -171,7 +173,7 @@ static const double piece_position_bonus[PIECE_COUNT][BOARD_SIZE] = {
     },
     [KING] = {
        /*       A    B    C    D    E    F    G    H    */
-       /* 1 */ 1.1, 1.1, 1.1, 1.0, 1.0, 1.0, 1.15, 1.15, 
+       /* 1 */ 1.1, 1.1, 1.1, 1.0, 1.0, 1.0, 1.3,  1.15, 
        /* 2 */ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0, 
        /* 3 */ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0, 
        /* 4 */ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  1.0, 
@@ -213,6 +215,75 @@ enum castle_type {
     CASTLE_KINGSIDE  = 1,
     CASTLE_QUEENSIDE = 2,
 };
+
+static bool board_equals(Board* b1, Board* b2)
+{
+	return memcmp(b1, b2, sizeof *b1) == 0;
+}
+
+static size_t board_hash(Board* b)
+{
+	size_t n = 5381;
+	for (int i=0; i<BOARD_SIZE; i++) {
+		n = n*33+(size_t)b[i];
+	}
+	return n;
+}
+
+struct boardset_entry {
+	Board board;
+    int n;
+	struct boardset_entry* next;
+};
+
+struct boardset {
+	struct boardset_entry* entries[SET_SIZE];
+};
+
+static void boardset_reset(struct boardset* bs)
+{
+    for (size_t i=0; i < sizeof bs->entries / sizeof *(bs->entries); i++) {
+        struct boardset_entry* next, *e = bs->entries[i];
+        while (e) {
+            next = e->next;
+            free(e->board);
+            free(e);
+            e = next;
+        }
+    }
+}
+
+static struct boardset_entry* boardset_get(struct boardset* bs, Board* b)
+{
+	size_t i = board_hash(b) % SET_SIZE;
+
+	struct boardset_entry** bsentry = &(bs->entries[i]);
+
+	while (*bsentry != NULL && !board_equals(b, &((*bsentry)->board))) {
+        *bsentry = (*bsentry)->next;
+	}
+
+    if (*bsentry == NULL) {
+        *bsentry = calloc(sizeof *bsentry, 1);
+        if (bsentry == NULL) {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return *bsentry;
+}
+
+int boardset_count(struct boardset* bs, Board* b)
+{
+    return boardset_get(bs, b)->n;
+}
+
+void boardset_inc(struct boardset* bs, Board* b)
+{
+    boardset_get(bs, b)->n += 1;
+}
+
 
 static inline bitmap_t bit(index_t i)
 {
@@ -902,7 +973,7 @@ static double heuristic(struct game_state* g, int depth)
         return 0;
 
     if (checkmate(g))
-        return g->player * -9999;
+        return g->player * -10000 * depth;
 
     double score = 0;
     for (index_t i=0; i<BOARD_SIZE; i++) {
@@ -942,6 +1013,7 @@ static void print_debug(struct game_state* g)
 
 static  void sigint_handler(int signal)
 {
+    (void)signal;
     paint_board(&sigint_state_copy, -1, -1);
     print_debug(&sigint_state_copy);
     dump_game_state(&sigint_state_copy);
@@ -1047,7 +1119,7 @@ int main()
     while (true) {
         printf("============================\n");
         paint_board(&state, from, to);
-        printf("est. score: %lf", heuristic(&state, 0));
+        printf("est. score: %lf\n", heuristic(&state, 0));
         //print_debug(&state);
         //dump_game_state(&state);
 

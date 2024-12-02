@@ -1,20 +1,14 @@
 
 
-enum chess_piece {
-    EMPTY  = 0,
-    KING   = 1,
-    QUEEN  = 2,
-    ROOK   = 3,
-    BISHOP = 4,
-    KNIGHT = 5,
-    PAWN   = 6,
-    PIECE_COUNT,
-};
+#include <stdint.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
 
-static bool board_equals(
+#define SET_SIZE 4096
+#define BOARD_SIZE 64
 
-
-
-struct board_map {
-	
-};
+typedef int_fast8_t piece_t;
+typedef piece_t Board[BOARD_SIZE];
